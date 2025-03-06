@@ -1,8 +1,13 @@
 spring:
+  profiles:
+    include: local
+    active: local
+
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: 6379
+      host: ${REDIS_HOST}
+      password: ${REDIS_PASSWORD}
+      port: ${REDIS_PORT}
       connect-timeout: 5000
       timeout: 3000
   lifecycle:
@@ -14,5 +19,5 @@ logging:
     org.springframework.data.redis: INFO
 
 server:
-  port: 8081
+  port: 8080
   shutdown: graceful
