@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import live.gloticker.constant.StreamChannel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @EnableScheduling
-public class MarketDataService {
+public class StreamService {
 	private final RedisMessageListenerContainer container;
 	private final ObjectMapper objectMapper;
 	private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
@@ -46,7 +47,7 @@ public class MarketDataService {
 			}
 		};
 
-		container.addMessageListener(listener, new PatternTopic("*.price.stream"));
+		container.addMessageListener(listener, new PatternTopic(StreamChannel.ALL_CHANNEL.getChannel()));
 		log.info("Subscribed to all price stream channels");
 	}
 

@@ -6,11 +6,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum StreamChannel {
-	INDICATOR_PRICE("indicator.price.stream"),
-	STOCK_PRICE("stock.price.stream"),
-	INDEX_PRICE("index.price.stream"),
-	FOREX_PRICE("forex.price.stream"),
-	CRYPTO_PRICE("crypto.price.stream");
+	ALL_CHANNEL("*.price.stream"),
+	INDEX_CHANNEL("index.price.stream"),
+	STOCK_CHANNEL("stock.price.stream"),
+	CRYPTO_CHANNEL("crypto.price.stream"),
+	FOREX_CHANNEL("forex.price.stream");
 
 	private final String channel;
 }
