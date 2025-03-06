@@ -31,6 +31,13 @@ pipeline {
             }
         }
 
+        stage('jar build') {
+            steps {
+                sh 'chmod +x ./gradlew'
+                sh './gradlew clean bootJar'
+            }
+        }
+
         stage('image build & docker-hub push') {
             steps {
                 script {
