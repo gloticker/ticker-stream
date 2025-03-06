@@ -2,6 +2,7 @@ package live.gloticker.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -12,8 +13,8 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/v1/**")
-			.allowedOrigins("*")// temporary
-			.allowedMethods("GET")
+			.allowedOriginPatterns("*") // temporary
+			.allowedMethods(HttpMethod.GET.name())
 			.allowedHeaders("*")
 			.allowCredentials(true)
 			.maxAge(3600);
