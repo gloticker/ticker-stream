@@ -6,7 +6,6 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.util.StringUtils;
 
 import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
@@ -28,30 +27,26 @@ public class RateLimitConfig implements DisposableBean {
 	@Value("${spring.data.redis.port:6379}")
 	private int redisPort;
 
-	@Value("${spring.data.redis.password:}")
-	private String redisPassword;
-
 	private RedisClient redisClient;
 	private StatefulRedisConnection<String, byte[]> redisConnection;
 
 	@Bean
 	public ProxyManager<String> bucketProxyManager() {
-		RedisURI.Builder builder = RedisURI.builder()
-			.withHost(redisHost)
-			.withPort(redisPort)
-			.withDatabase(RATE_LIMIT_DB_INDEX);
-
-		if (StringUtils.hasText(redisPassword)) {
-			builder.withPassword(redisPassword.toCharArray());
-		}
-
-		redisClient = RedisClient.create(builder.build());
+		redisClient = redisClient();
 		redisConnection = redisClient.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
 
 		return LettuceBasedProxyManager.builderFor(redisConnection)
 			.withExpirationStrategy(
 				ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(Duration.ofMinutes(10)))
 			.build();
+	}
+
+	private RedisClient redisClient() {
+		return RedisClient.create(RedisURI.builder()
+			.withHost(redisHost)
+			.withPort(redisPort)
+			.withDatabase(RATE_LIMIT_DB_INDEX)
+			.build());
 	}
 
 	@Override
