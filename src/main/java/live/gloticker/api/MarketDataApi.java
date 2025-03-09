@@ -13,6 +13,7 @@ import org.springframework.web.context.request.async.AsyncRequestTimeoutExceptio
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import jakarta.validation.constraints.Pattern;
+import live.gloticker.service.AnalysisService;
 import live.gloticker.service.MarketService;
 import live.gloticker.service.StreamService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class MarketDataApi {
 	private final StreamService streamService;
 	private final MarketService marketService;
+	private final AnalysisService analysisService;
 
 	@GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	public SseEmitter streamMarketData() {
@@ -32,6 +34,11 @@ public class MarketDataApi {
 	@GetMapping("/{type}")
 	public ResponseEntity<List<Object>> getData(@PathVariable("type") @Pattern(regexp = "snapshot|chart") String type) {
 		return ResponseEntity.ok(marketService.getAllData(type));
+	}
+
+	@GetMapping("/analysis")
+	public ResponseEntity<String> getAnalysis() {
+		return ResponseEntity.ok(analysisService.getLatestAnalysis());
 	}
 
 	@ExceptionHandler(AsyncRequestTimeoutException.class)
