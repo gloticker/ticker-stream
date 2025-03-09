@@ -12,6 +12,8 @@ spring:
       timeout: 3000
   lifecycle:
     timeout-per-shutdown-phase: 1s
+  jackson:
+    time-zone: America/New_York
 
 logging:
   level:

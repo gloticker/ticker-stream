@@ -13,6 +13,7 @@ import org.springframework.web.context.request.async.AsyncRequestTimeoutExceptio
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import jakarta.validation.constraints.Pattern;
+import live.gloticker.dto.AnalysisData;
 import live.gloticker.service.AnalysisService;
 import live.gloticker.service.MarketService;
 import live.gloticker.service.StreamService;
@@ -37,8 +38,10 @@ public class MarketDataApi {
 	}
 
 	@GetMapping("/analysis")
-	public ResponseEntity<String> getAnalysis() {
-		return ResponseEntity.ok(analysisService.getLatestAnalysis());
+	public ResponseEntity<AnalysisData> getAnalysis() {
+		return analysisService.getLatestAnalysis()
+			.map(ResponseEntity::ok)
+			.orElse(ResponseEntity.notFound().build());
 	}
 
 	@ExceptionHandler(AsyncRequestTimeoutException.class)
