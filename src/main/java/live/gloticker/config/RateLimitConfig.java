@@ -27,6 +27,9 @@ public class RateLimitConfig implements DisposableBean {
 	@Value("${spring.data.redis.port:6379}")
 	private int redisPort;
 
+	@Value("${spring.data.redis.password:}")
+	private String redisPassword;
+
 	private RedisClient redisClient;
 	private StatefulRedisConnection<String, byte[]> redisConnection;
 
@@ -42,11 +45,16 @@ public class RateLimitConfig implements DisposableBean {
 	}
 
 	private RedisClient redisClient() {
-		return RedisClient.create(RedisURI.builder()
+		RedisURI.Builder builder = RedisURI.builder()
 			.withHost(redisHost)
 			.withPort(redisPort)
-			.withDatabase(RATE_LIMIT_DB_INDEX)
-			.build());
+			.withDatabase(RATE_LIMIT_DB_INDEX);
+
+		if (redisPassword != null && !redisPassword.isEmpty()) {
+			builder.withPassword(redisPassword.toCharArray());
+		}
+
+		return RedisClient.create(builder.build());
 	}
 
 	@Override
