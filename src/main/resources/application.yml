@@ -21,3 +21,8 @@ logging:
 server:
   port: 8080
   shutdown: graceful
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY}
+    url: ${OPENAI_API_URL}
