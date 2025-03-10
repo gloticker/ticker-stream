@@ -14,13 +14,10 @@ import io.github.bucket4j.distributed.proxy.ProxyManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RateLimitInterceptor implements HandlerInterceptor {
-
 	private static final int DEFAULT_CAPACITY = 6;
 	private static final Duration WINDOW_DURATION = Duration.ofSeconds(10);
 	private static final String RATE_LIMIT_REMAINING_HEADER = "X-RateLimit-Remaining";
@@ -50,17 +47,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 			response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
 			long secondsToWait = probe.getNanosToWaitForRefill() / 1_000_000_000;
 
-			log.debug("Rate limit exceeded - Client: {}, Remaining: {}, Wait: {}s",
-				clientId, probe.getRemainingTokens(), secondsToWait);
-
 			response.setHeader(RETRY_AFTER_HEADER, String.valueOf(secondsToWait));
 			response.setHeader(RATE_LIMIT_REMAINING_HEADER, "0");
 			response.setHeader(X_RATE_LIMIT_RESET, String.valueOf(System.currentTimeMillis() / 1000 + secondsToWait));
 			return false;
 		}
-
-		log.debug("Request allowed - Client: {}, Remaining: {}",
-			clientId, probe.getRemainingTokens());
 
 		response.setHeader(RATE_LIMIT_REMAINING_HEADER, String.valueOf(probe.getRemainingTokens()));
 		long nextRefillInSeconds = probe.getNanosToWaitForRefill() / 1_000_000_000;
