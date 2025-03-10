@@ -19,7 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/v1/**")
-			.allowedOriginPatterns("*") // temporary
+			.allowedOriginPatterns("*")
 			.allowedMethods(HttpMethod.GET.name())
 			.allowedHeaders("*")
 			.allowCredentials(true)
@@ -29,7 +29,8 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(rateLimitInterceptor)
-			.addPathPatterns("/v1/market/**");
+			.addPathPatterns("/v1/market/**")
+			.excludePathPatterns("/v1/market/health");
 	}
 
 	@Bean
