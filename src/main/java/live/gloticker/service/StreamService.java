@@ -3,9 +3,8 @@ package live.gloticker.service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.PatternTopic;
@@ -30,8 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 public class StreamService {
 	private final RedisMessageListenerContainer container;
 	private final ObjectMapper objectMapper;
-	private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
-	private static final long TIMEOUT = 0L;
+	private final ConcurrentHashMap<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+	private static final long TIMEOUT = 30 * 60 * 1000L; // 30분
 
 	@PostConstruct
 	private void init() {
@@ -58,68 +57,54 @@ public class StreamService {
 		log.info("Cleaned up Redis container and emitters");
 	}
 
-	private void removeDeadEmitters(List<SseEmitter> deadEmitters) {
-		if (!deadEmitters.isEmpty()) {
-			emitters.removeAll(deadEmitters);
-			log.debug("Removed {} disconnected clients. Remaining: {}",
-				deadEmitters.size(), emitters.size());
-		}
-	}
-
-	private void sendToEmitters(Object message, List<SseEmitter> deadEmitters) {
-		emitters.forEach(emitter -> {
+	private void sendToAllEmitters(Object message) {
+		emitters.forEach((clientId, emitter) -> {
 			try {
 				emitter.send(message);
 			} catch (Exception e) {
-				deadEmitters.add(emitter);
+				emitters.remove(clientId);
+				log.debug("Removed client {} due to send failure", clientId);
 			}
 		});
 	}
 
 	@Scheduled(fixedRate = 15000)
 	public void sendHeartbeat() {
-		List<SseEmitter> deadEmitters = new ArrayList<>();
 		String ping = String.format("ping %s",
 			LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-
-		sendToEmitters(ping, deadEmitters);
-		removeDeadEmitters(deadEmitters);
-	}
-
-	private void sendToAllEmitters(Object message) {
-		List<SseEmitter> deadEmitters = new ArrayList<>();
-		sendToEmitters(message, deadEmitters);
-		removeDeadEmitters(deadEmitters);
+		sendToAllEmitters(ping);
 	}
 
 	public SseEmitter subscribe() {
+		String clientId = UUID.randomUUID().toString();
 		SseEmitter emitter = new SseEmitter(TIMEOUT);
 
 		emitter.onCompletion(() -> {
-			if (emitters.remove(emitter)) {
-				log.debug("Client completed connection. Remaining clients: {}", emitters.size());
+			if (emitters.remove(clientId) != null) {
+				log.debug("Client {} completed connection. Remaining clients: {}", clientId, emitters.size());
 			}
 		});
 
 		emitter.onTimeout(() -> {
-			if (emitters.remove(emitter)) {
-				log.debug("Client connection timed out. Remaining clients: {}", emitters.size());
+			if (emitters.remove(clientId) != null) {
+				log.debug("Client {} connection timed out. Remaining clients: {}", clientId, emitters.size());
 			}
 		});
 
 		emitter.onError(ex -> {
-			if (emitters.remove(emitter)) {
-				log.debug("Client connection error: {}. Remaining clients: {}",
-					ex.getMessage(), emitters.size());
+			if (emitters.remove(clientId) != null) {
+				log.debug("Client {} connection error: {}. Remaining clients: {}",
+					clientId, ex.getMessage(), emitters.size());
 			}
 		});
 
 		try {
 			emitter.send(SseEmitter.event().comment("connected"));
-			emitters.add(emitter);
-			log.debug("New client subscribed. Total clients: {}", emitters.size());
+			emitters.put(clientId, emitter);
+			log.debug("New client {} subscribed. Total clients: {}", clientId, emitters.size());
 		} catch (IOException e) {
-			log.debug("Failed to send initial ping");
+			log.debug("Failed to send initial ping to client {}", clientId);
+			emitters.remove(clientId);
 		}
 
 		return emitter;
