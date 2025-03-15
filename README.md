@@ -34,7 +34,7 @@ ex) `/v1/market/snapshot`
 - Java 17
 - Spring Boot
 - Redis
-- buckt4j
+- bucket4j
 - OpenAI GPT-4
 - Proxmox VE
 - Docker
