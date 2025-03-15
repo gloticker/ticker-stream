@@ -24,6 +24,12 @@ server:
   port: 8080
   shutdown: graceful
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+
 openai:
   api:
     key: ${OPENAI_API_KEY}
