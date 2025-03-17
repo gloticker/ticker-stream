@@ -89,7 +89,8 @@ pipeline {
                             --dns 8.8.8.8 --dns 8.8.4.4 \\
                             -p \${SERVER_PORT}:\${SERVER_PORT} \\
                             --restart unless-stopped \\
-                            -d ${DOCKER_REPOSITORY}:latest
+                            --memory="12g" --memory-swap="24g" \\
+                            -d ${DOCKER_REPOSITORY}:latest java -Xmx12g -jar /app.jar
 
                             rm -f ~/gloticker-ticker-stream-credentials
                             '
